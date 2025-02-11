@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href={{request.url_for('static', path='css/styles.css')}}>
+</head>
+<body>
+    <!-- /registration -->
+
+    <h1>Словарь заимствованных слов морской тематики</h1>
+
+    <pre id="output">Здесь появится ответ...</pre>
+
+    <details><summary>Регистрация</summary>
+        <form id="registerForm" onsubmit="makeAndSendRequest(event, 'registration', 'POST', 'registerForm')">
+            <label>Логин: <input type="text" name="login" required></label>
+            <label>Пароль: <input type="text" name="password" required></label>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+    </details>
+
+    <!-- ... -->
+    <details><summary>Получить информацию об аккаунте</summary>
+        <form action="" method="post">
+            <input type="text" placeholder="логин">
+            <input type="text" placeholder="пароль">
+        </form>
+    </details>
+
+    <!-- /see -->
+    <details><summary>Доступ к словарю</summary>
+        <form action="" method="post">
+            <input type="text" placeholder="count">
+            <input type="text" placeholder="offset">
+            <input type="text" placeholder="word">
+        </form>
+    </details>
+
+    <!-- /add-word -->
+    <details><summary>Добавить слово</summary>
+        <form action="" method="post">
+            <input type="text" placeholder="token">
+            <input type="text" placeholder="word">
+            <input type="text" placeholder="meaning">
+        </form>
+    </details>
+
+    <details><summary>Удалить слово</summary>
+        <form action="" method="post">
+            <input type="text" placeholder="token">
+            <input type="text" placeholder="word_id">
+        </form>
+    </details>
+
+    <details><summary>Редактировать слово</summary>
+        <form action="" method="post">
+            <input type="text" placeholder="token">
+            <input type="text" placeholder="word_id">
+            <input type="text" placeholder="new_meaning">
+        </form>
+    </details>
+
+    <!-- <button>123</button> -->
+    <a href="{{request.url_for('main_interface')}}">На главную страницу</a>
+    <p>Текущий URL: {{request.url}}</p>
+
+    <script src={{request.url_for('static', path='js/requests.js')}}></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>

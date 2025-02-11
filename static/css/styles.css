@@ -1,0 +1,44 @@
+:root {
+    --borderRadius: 15px;
+    --borderRadiusSm: calc(var(--borderRadius) / 1.5);
+}
+
+
+body {
+    background-color:floralwhite;
+    margin: 50px;
+}
+
+pre {
+    border-width: 2px;
+    border-style: solid;
+    border-color: transparent;
+    padding: 20px;
+    width: fit-content;
+    border-radius: var(--borderRadiusSm);
+}
+details {
+    margin: 10px 0;
+    padding: 10px 20px;
+    font-size: 2rem;
+    border: 1px solid black;
+    border-radius: var(--borderRadius);
+}
+form {
+
+    margin-left: 25px;
+
+    & label {
+        margin: 10px 0;
+        display: block;
+    }
+
+    & input {
+        border-radius: var(--borderRadiusSm);
+
+    }
+
+    & button {
+        border-radius: var(--borderRadiusSm);
+    }
+}
