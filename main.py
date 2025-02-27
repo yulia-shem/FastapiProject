@@ -2,11 +2,14 @@
 import sqlite3
 import uuid
 from datetime import datetime
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"])
 
 app = FastAPI(
     # docs_url=None,
@@ -40,6 +43,7 @@ cursor.execute("""
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         word TEXT NOT NULL,
         meaning TEXT NOT NULL,
+        language TEXT NOT NULL,
         user_login TEXT NOT NULL,
         added_date TEXT NOT NULL
     )
@@ -71,17 +75,17 @@ def registration(login: str, password: str):
         """INSERT INTO users (
             login, password, token, can_edit, registration_date
         ) VALUES (?, ?, ?, ?, ?)""",
-        (login, password, token, 0, reg_date)
+        (login, pwd_context.hash(password), token, 0, reg_date)
     )
     conn.commit()
     return {
         "Результат": "Регистрация прошла успешно!",
-        "Ваш токен": token
+        "Ваш токен (СОХРАНИТЕ ЕГО ДЛЯ СЕБЯ!)": token
     }
 
 # Добавление слова
 @app.post("/add-word")
-def add_word(token: str, word: str, meaning: str):
+def add_word(token: str, word: str, meaning: str, language: str):
     if not (user := get_user(token)): # берем логин пользователя и записываем в user
         # return {"message": "Некорректный токен"}
         return JSONResponse({"Результат": "Некорректный токен"}, 403) # если такого логина нет, то прилетает json
@@ -89,15 +93,18 @@ def add_word(token: str, word: str, meaning: str):
     added_date = datetime.now().isoformat() # дата добавления слова
     # слово, его значение, кто добавил, когда добавил
     cursor.execute("""
-        INSERT INTO words (word, meaning, user_login, added_date)
-        VALUES (?, ?, ?, ?)
-    """, (word.capitalize(), meaning, user[1], added_date))
+        INSERT INTO words (word, meaning, language, user_login, added_date)
+        VALUES (?, ?, ?, ?, ?)
+    """, (word.capitalize(), meaning.capitalize(), language.capitalize(), user[1], added_date))
     conn.commit()
     return {"Результат": f'Слово «{word}» успешно добавлено!'}
 
 # Изменение слова
 @app.post("/edit-word")
-def edit_word(token: str, word_id: int, new_meaning: str):
+def edit_word(token: str, word_id: int,
+            new_meaning: str | None = Query(None),
+            new_language: str | None = Query(None)):
+
     if not (user := get_user(token)):
         return JSONResponse({"Результат": "Некорректный токен"}, 403)
     if not user[4]:
@@ -107,7 +114,15 @@ def edit_word(token: str, word_id: int, new_meaning: str):
     if not word:
         return JSONResponse({"Ошибка": "Неверный id слова"}, 403)
 
-    cursor.execute("UPDATE words SET meaning = ? WHERE id = ?", (new_meaning, word_id))
+    if new_meaning and new_language == None: # изменить только значение
+        cursor.execute("UPDATE words SET meaning = ? WHERE id = ?", (new_meaning.capitalize(), word_id))
+
+    if new_language and new_meaning == None: # изменить только язык заимствования
+        cursor.execute("UPDATE words SET language = ? WHERE id = ?", (new_language.capitalize(), word_id))
+
+    if new_meaning and new_language: # изменить и значение и язык заимствования
+        cursor.execute("UPDATE words SET meaning = ?, language = ? WHERE id = ?", (new_meaning.capitalize(), new_language.capitalize(), word_id))
+
     conn.commit()
     return {"Результат": "Слово было успешно обновлено!"}
 
@@ -125,7 +140,9 @@ def delete_word(token, word_id):
 
 
 @app.get("/see")
-def see_words(count: int = None, offset: int = None, word: str = None):
+def see_words(count: int | None = Query(None),
+            offset: int | None = Query(None),
+            word: str | None = Query(None)):
 
     if offset and count == None:
         return JSONResponse({"Ошибка": "Сдвиг без указанного количества слов"}, 403)
@@ -153,3 +170,13 @@ def see_words(count: int = None, offset: int = None, word: str = None):
         cursor.execute("SELECT * FROM words LIMIT ? OFFSET ?", (count, offset))
         return {"Результат": cursor.fetchall()}
 
+
+@app.get("/get-token")
+def get_token(login: str, password: str):
+    cursor.execute("SELECT token, password FROM users WHERE login = ?", (login,))
+    res = cursor.fetchone()
+    if pwd_context.verify(password, res[1]): # сравниваем пароли
+        if res[0]:
+            return {"Ваш токен (СОХРАНИТЕ ЕГО!)": res[0]}
+    else:
+        return JSONResponse({"Ошибка": "Такой пользователь не найден"}, 403)
