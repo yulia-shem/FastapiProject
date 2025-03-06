@@ -29,7 +29,7 @@ async function makeAndSendRequest(e, endpoint, method, formId) { // асинхр
         // await - возможно ожидание, можно переключаться на другие задачи в функции, пока запрос не выполнится
         let result = await response.json(); // json
         output.innerHTML = "";
-        if (url.startsWith("/see")) {
+        if (url.startsWith("/see") && (response.ok)) {
             createTable(result);
         } else {
             createPre(result);

@@ -1,4 +1,7 @@
 # Как запустить - в терминал (командную строку) fastapi dev main.py
+# Логин: Yulia Shem
+# Пароль: project_2025
+
 import sqlite3
 import uuid
 from datetime import datetime
@@ -8,7 +11,7 @@ from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
-
+import os
 pwd_context = CryptContext(schemes=["bcrypt"])
 
 app = FastAPI(
@@ -18,12 +21,12 @@ app = FastAPI(
 
 
 # подключаем папки с локальными файлами
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=f"{os.path.dirname(os.path.realpath(__file__))}/static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # ORM - программирование базы данных не на языке базы данных
 # RAW SQL
-conn = sqlite3.connect("database.db", check_same_thread=False)
+conn = sqlite3.connect(f"{os.path.dirname(os.path.realpath(__file__))}/database.db", check_same_thread=False)
 cursor = conn.cursor()
 # уникальность логина
 cursor.execute("""
@@ -175,8 +178,10 @@ def see_words(count: int | None = Query(None),
 def get_token(login: str, password: str):
     cursor.execute("SELECT token, password FROM users WHERE login = ?", (login,))
     res = cursor.fetchone()
+    if not res:
+        return JSONResponse({"Ошибка": "Пользователь не найден"}, 403)
     if pwd_context.verify(password, res[1]): # сравниваем пароли
         if res[0]:
             return {"Ваш токен (СОХРАНИТЕ ЕГО!)": res[0]}
     else:
-        return JSONResponse({"Ошибка": "Такой пользователь не найден"}, 403)
+        return JSONResponse({"Ошибка": "Неверный пароль"}, 403)

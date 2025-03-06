@@ -24,8 +24,8 @@
         <!-- /get-token -->
         <details><summary>Забыли свой токен?</summary>
             <form id="getTokenForm" onsubmit="makeAndSendRequest(event, 'get-token', 'GET', 'getTokenForm')">
-                <label>Логин: <input type="text" name="login"></label>
-                <label>Пароль: <input type="text" name="password"></label>
+                <label>Логин: <input type="text" name="login" required></label>
+                <label>Пароль: <input type="text" name="password" required></label>
                 <button type="submit">Просмотреть токен</button>
             </form>
         </details>
@@ -41,7 +41,7 @@
         </details>
 
         <!-- /add-word -->
-        <details><summary>Добавление слова</summary>
+        <details><summary>Добавление слова <span class="note">нужна регистрация</span></summary>
             <form id="addWordForm" onsubmit="makeAndSendRequest(event, 'add-word', 'POST', 'addWordForm')">
                 <label>Ваш идентификатор (токен): <input type="text" name="token" required></label>
                 <label>Слово: <input type="text" name="word" required></label>
@@ -51,7 +51,7 @@
             </form>
         </details>
 
-        <details><summary>Удаление слова</summary>
+        <details><summary>Удаление слова <span class="note">нужны права модератора</span></summary>
             <form id="deleteWordForm" onsubmit="makeAndSendRequest(event, 'delete-word', 'POST', 'deleteWordForm')">
                 <label>Ваш идентификатор (токен): <input type="text" name="token" required></label>
                 <label>ID слова: <input type="text" name="word_id" required></label>
@@ -59,11 +59,12 @@
             </form>
         </details>
 
-        <details><summary>Редактирование слова</summary>
+        <details><summary>Редактирование слова <span class="note">нужны права модератора</span></summary>
             <form id="editWordForm" onsubmit="makeAndSendRequest(event, 'edit-word', 'POST', 'editWordForm')">
                 <label>Ваш идентификатор (токен): <input type="text" name="token" required></label>
                 <label>ID слова: <input type="text" name="word_id" required></label>
-                <label>Значение слова: <input type="text" name="new_meaning" required></label>
+                <label>Значение слова: <input type="text" name="new_meaning"></label>
+                <label>Язык заимствования: <input type="text" name="new_language"></label>
                 <button type="submit">Редактировать слово</button>
             </form>
         </details>
