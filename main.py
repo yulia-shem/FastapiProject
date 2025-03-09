@@ -91,7 +91,7 @@ def registration(login: str, password: str):
 def add_word(token: str, word: str, meaning: str, language: str):
     if not (user := get_user(token)): # берем логин пользователя и записываем в user
         # return {"message": "Некорректный токен"}
-        return JSONResponse({"Результат": "Некорректный токен"}, 403) # если такого логина нет, то прилетает json
+        return JSONResponse({"Ошибка": "Некорректный токен"}, 403) # если такого логина нет, то прилетает json
 
     added_date = datetime.now().isoformat() # дата добавления слова
     # слово, его значение, кто добавил, когда добавил
@@ -109,9 +109,9 @@ def edit_word(token: str, word_id: int,
             new_language: str | None = Query(None)):
 
     if not (user := get_user(token)):
-        return JSONResponse({"Результат": "Некорректный токен"}, 403)
+        return JSONResponse({"Ошибка": "Некорректный токен"}, 403)
     if not user[4]:
-        return JSONResponse({"Результат": "Не хватает прав"}, 403)
+        return JSONResponse({"Ошибка": "Не хватает прав"}, 403)
     cursor.execute("SELECT * FROM words WHERE id = ?", (word_id,))
     word = cursor.fetchone()
     if not word:
@@ -133,45 +133,44 @@ def edit_word(token: str, word_id: int,
 @app.post("/delete-word")
 def delete_word(token, word_id):
     if not (user := get_user(token)):
-        return JSONResponse({"Результат": "Некорректный токен"}, 403)
+        return JSONResponse({"Ошибка": "Некорректный токен"}, 403)
     # если can_edit
     if not user[4]:
-        return JSONResponse({"Результат": "Не хватает прав"}, 403)
+        return JSONResponse({"Ошибка": "Не хватает прав"}, 403)
     cursor.execute("DELETE FROM words WHERE id = ?", (word_id,))
     conn.commit()
     return {"Результат": f'Слово с id={word_id} успешно удалено!'}
 
 
 @app.get("/see")
-def see_words(count: int | None = Query(None),
-            offset: int | None = Query(None),
+def see_words(letter: str | None = Query(None),
             word: str | None = Query(None)):
 
-    if offset and count == None:
-        return JSONResponse({"Ошибка": "Сдвиг без указанного количества слов"}, 403)
+    if letter and word == None:
+        cursor.execute("SELECT * FROM words  WHERE word LIKE ? ORDER BY word ASC", (f"{letter.upper()}%",))
+        return {"Результат": cursor.fetchall()}
 
-    if count and offset and word:
-        return JSONResponse({"Ошибка": "Требуется либо слово, либо кол-во с/без сдвига"}, 403)
+    if letter and word:
+        return JSONResponse({"Ошибка": "Требуется либо слово, либо буква, с которой начинаются слова"}, 403)
 
     # /see
-    if (count, offset, word) == (None, None, None):
-        cursor.execute("SELECT * FROM words")
+    if (letter, word) == (None, None):
+        cursor.execute("SELECT * FROM words ORDER BY word ASC")
         return {"Результат": cursor.fetchall()}
 
     # /see?word=
-    if word and (count, offset) == (None, None):
+    if word and letter == None:
         cursor.execute("SELECT * FROM words WHERE word = ?", (word.capitalize(),))
         return {"Результат": cursor.fetchall()}
     
-    # /see?count=
-    if count and (offset, word) == (None, None):
-        cursor.execute("SELECT * FROM words LIMIT ?", (count,))
-        return {"Результат": cursor.fetchall()}
+    # # /see?count=
+    # if count and (letter, word) == (None, None):
+    #     cursor.execute("SELECT * FROM words ORDER BY word ASC LIMIT ?", (count,))
+    #     return {"Результат": cursor.fetchall()}
     
     # count+offset
-    if count and offset and word == None:
-        cursor.execute("SELECT * FROM words LIMIT ? OFFSET ?", (count, offset))
-        return {"Результат": cursor.fetchall()}
+    # if count and letter and word == None:
+    #     return JSONResponse({"Ошибка": "Требуется либо буква, либо количество слов"}, 403)
 
 
 @app.get("/get-token")
