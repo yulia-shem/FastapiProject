@@ -7,7 +7,6 @@ import uuid
 from datetime import datetime
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
@@ -15,7 +14,7 @@ import os
 pwd_context = CryptContext(schemes=["bcrypt"])
 
 app = FastAPI(
-    # docs_url=None,
+    docs_url=None,
     redoc_url=None,
     ) # отключаем путь /redoc
 
@@ -131,12 +130,18 @@ def edit_word(token: str, word_id: int,
 
 # Удаление слова
 @app.post("/delete-word")
-def delete_word(token, word_id):
+def delete_word(token: str, word_id: int):
     if not (user := get_user(token)):
         return JSONResponse({"Ошибка": "Некорректный токен"}, 403)
     # если can_edit
     if not user[4]:
         return JSONResponse({"Ошибка": "Не хватает прав"}, 403)
+    # есть ли слово с таким id
+    cursor.execute("SELECT * FROM words WHERE id = ?", (word_id,))
+    word = cursor.fetchone()
+    if not word:
+        return JSONResponse({"Ошибка": "Неверный id слова"}, 403)
+
     cursor.execute("DELETE FROM words WHERE id = ?", (word_id,))
     conn.commit()
     return {"Результат": f'Слово с id={word_id} успешно удалено!'}
